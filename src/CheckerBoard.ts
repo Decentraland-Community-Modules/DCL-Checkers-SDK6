@@ -730,7 +730,7 @@ export class CheckerBoard extends Entity
     this.addComponent(new GLTFShape("models/GameBoard.glb"));
     this.addComponent(new Transform
     ({
-      position: new Vector3(0,0,0),
+      position: new Vector3(0,1,0),
       scale: new Vector3(1,1,1),
       rotation: new Quaternion().setEuler(0,0,0)
     }));
@@ -753,6 +753,18 @@ export class CheckerBoard extends Entity
         showFeedback: false,
       })
     );
+
+    //create table object
+    var tableObj = new Entity();
+    tableObj.setParent(this);
+    this.addComponent(new GLTFShape("models/GameTable.glb"));
+    this.addComponent(new Transform
+    ({
+      position: new Vector3(0,0,0),
+      scale: new Vector3(1,1,1),
+      rotation: new Quaternion().setEuler(0,0,0)
+    }));
+
 
     //ready 3D menu object
     this.prepareMenu();

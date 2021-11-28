@@ -139,7 +139,7 @@ export class CheckerBoardManager extends Entity
             //create and position a board from the manager
             //create first
             var activeBoardIndex1 = this.CreateCheckerBoard();
-            this.PositionCheckerBoard(activeBoardIndex1, 4, 0, 6);
+            this.PositionCheckerBoard(activeBoardIndex1, 4, 1, 6);
             //create second
             //var activeBoardIndex2 = this.CreateCheckerBoard();
             //this.PositionCheckerBoard(activeBoardIndex2, 4, 0, 10);
