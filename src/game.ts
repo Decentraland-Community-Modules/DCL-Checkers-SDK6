@@ -36,7 +36,6 @@
 import { getUserData, UserData } from "@decentraland/Identity"
 import { CheckerBoardManager } from "./CheckerBoardManager";
 import { PlayerIdentifier } from "./PlayerIdentifier";
-import * as utils from '@dcl/ecs-scene-utils'
 
 //create player identifier object
 //  this object MUST be maintained through the scene
@@ -45,7 +44,6 @@ var playerID = new PlayerIdentifier();
 
 //create the board manager and add it to the scene
 var boardManager = new CheckerBoardManager(playerID);
-var activeBoardIndex;
 engine.addEntity(boardManager);
 
 //attempt to get user's data
@@ -56,32 +54,16 @@ let userData = executeTask(async () =>
     //if there is received data, load in their details 
     if(data != null) 
     {
-        if(PlayerIdentifier.IsDebugging){ log("Aquirred user data"); }
+        if(PlayerIdentifier.IsDebugging){ log("MAIN: aquirred user data"); }
+
         //record user's data
         PlayerIdentifier.USER_DATA = data;
+
         //begin the set up process
-        setup();
+        boardManager.NetworkSetup();
     }
     else
     {
         if(PlayerIdentifier.IsDebugging){ log("ERROR: FAILED TO FIND USER DATA!"); }
     }
 });
-
-//wait for player's data to be populated
-function setup()
-{
-
-    //sync request sync data from instance host
-    playerID.RequestSourceData();
-
-    //process a delay and ensure the user recorded a source
-    //  we randomize this to allow us to have variency while testing
-    //  if we did not then both pages would connect at the same time
-    var time = 2500 + Math.floor(Math.random() * 1500);
-    utils.setTimeout(time, ()=>
-    {
-        if(PlayerIdentifier.IsDebugging){ log("initialization over, checking verification!"); }
-        boardManager.VerifyRegistration();
-    });
-}

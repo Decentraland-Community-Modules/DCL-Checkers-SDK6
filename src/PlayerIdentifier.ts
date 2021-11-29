@@ -43,9 +43,6 @@ export class PlayerIdentifier extends Entity
     //trusted source for the system
     public static TRUSTED_SOURCE:string|undefined;
 
-    //data exchange capsule
-    send:SourceCapsule = { sender:"", source:"" };
-
     //used to initialize object
     constructor()
     {
@@ -56,37 +53,4 @@ export class PlayerIdentifier extends Entity
         PlayerIdentifier.MESSAGE_BUS = new MessageBus();
         PlayerIdentifier.TRUSTED_SOURCE = undefined;
     }
-
-    //makes a request to receive the trusted host of the scene
-    public RequestSourceData()
-    {
-        if(PlayerIdentifier.IsDebugging){ log("MESSAGE BUS EMIT "+PlayerIdentifier.USER_DATA.displayName+": user="+PlayerIdentifier.USER_DATA.userId+" sending sync request"); }
-        
-        //update send capsule
-        this.send.sender = PlayerIdentifier.USER_DATA.userId;
-        this.send.source = undefined;
-
-        //send data
-        PlayerIdentifier.MESSAGE_BUS.emit("get_source", this.send);
-    }
-
-    //prepares and sends data to set this user as the trusted host to the scene
-    public SendSourceData()
-    {
-        if(PlayerIdentifier.IsDebugging){ log("MESSAGE BUS EMIT "+PlayerIdentifier.USER_DATA.displayName+": user="+PlayerIdentifier.USER_DATA.userId+" sending source sync data"); }
-
-        //update send capsule
-        this.send.sender = PlayerIdentifier.USER_DATA.userId;
-        this.send.source = PlayerIdentifier.USER_DATA.userId;
-
-        //send data
-        PlayerIdentifier.MESSAGE_BUS.emit("sync_source", this.send);
-    }
-}
-
-//stores details for this scene's source
-export type SourceCapsule =
-{
-  sender:string;
-  source:string|undefined;
 }

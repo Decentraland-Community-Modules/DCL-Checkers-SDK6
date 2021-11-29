@@ -93,7 +93,7 @@ export class CheckerBoard extends Entity
     if(CheckerBoard.IsDebugging){ log("initializing 3d menu for checker board: "+this.index.toString()+"..."); }
     //place menu as a child of the board
     this.menuBuilder.setParent(this);
-    this.menuBuilder.getComponent(Transform).position = new Vector3(-2,1.5,0);
+    this.menuBuilder.getComponent(Transform).position = new Vector3(-1.4,1.1,0);
     this.menuBuilder.getComponent(Transform).scale = new Vector3(0.25,0.25,0.25);
     this.menuBuilder.getComponent(Transform).rotate(Axis.Y, 270);
 
@@ -757,10 +757,10 @@ export class CheckerBoard extends Entity
     //create table object
     var tableObj = new Entity();
     tableObj.setParent(this);
-    this.addComponent(new GLTFShape("models/GameTable.glb"));
-    this.addComponent(new Transform
+    tableObj.addComponent(new GLTFShape("models/GameTable.glb"));
+    tableObj.addComponent(new Transform
     ({
-      position: new Vector3(0,0,0),
+      position: new Vector3(0,-1.01,0),
       scale: new Vector3(1,1,1),
       rotation: new Quaternion().setEuler(0,0,0)
     }));
@@ -790,31 +790,26 @@ export class CheckerBoard extends Entity
     //registered users
     for(let i:number=0; i<this.registered_users_id.length; i++)
     {
-      if(this.registered_users_id[i] != "")
-      {
-        data.serial_state += this.registered_users_id[i].toString()+"_";
-        data.serial_state += this.registered_users_name[i].toString()+"_";
-      }
-      else
-      {
-        data.serial_state += "NULL_";
-        data.serial_state += "NULL_";
-      }
+      data.serial_state += this.registered_users_id[i].toString()+"_";
+      data.serial_state += this.registered_users_name[i].toString()+"_";
     }
     //board position
     data.serial_state += this.getComponent(Transform).position.x.toString()+"_";
     data.serial_state += this.getComponent(Transform).position.y.toString()+"_";
     data.serial_state += this.getComponent(Transform).position.z.toString();
-    if(CheckerBoard.IsDebugging){ log("saving checker board: "+data.serial_state); }
+    if(CheckerBoard.IsDebugging){ log("SOURCE: saving board state: "+data.serial_state); }
     
     //build board's marker pool serial
-    data.serial_markers = this.marker_pool.SaveToSerial();
+    data.serial_markers_0 = this.marker_pool.SaveToSerial(0);
+    if(CheckerBoard.IsDebugging){ log("SOURCE: saving marker positions for team 0: "+data.serial_markers_0); }
+    data.serial_markers_1 = this.marker_pool.SaveToSerial(1);
+    if(CheckerBoard.IsDebugging){ log("SOURCE: saving marker positions for team 1: "+data.serial_markers_1); }
   }
 
   //prepares the board based on the provided data capsule
   public LoadBoardFromSerial(data:BoardCapsule)
   {
-    if(CheckerBoard.IsDebugging){ log("loading checker board: "+data.serial_state); }
+    if(CheckerBoard.IsDebugging){ log("CLIENT: loading board state: "+data.serial_state); }
     //break down serial
     var deserial:string[] = data.serial_state.split('_');
     
@@ -825,40 +820,38 @@ export class CheckerBoard extends Entity
     //registered users
     for(let i:number=0; i<this.registered_users_id.length; i++)
     {
-      if(this.registered_users_id[i] != "NULL")
-      {
-        this.registered_users_id[i] = deserial[2+(i*2)];
-        this.registered_users_name[i] = deserial[3+(i*2)];
-      }
-      else
-      {
-        this.registered_users_id[i] = "";
-        this.registered_users_name[i] = "";
-      }
+      this.registered_users_id[i] = deserial[2+(i*2)];
+      this.registered_users_name[i] = deserial[3+(i*2)];
     }
     this.updateUserName();
     //board position
     this.SetPosition(+deserial[6],+deserial[7],+deserial[8]);
 
+    if(CheckerBoard.IsDebugging){ log("CLIENT: loading marker positions: "+data.serial_markers_0); }
     //place all markers based on marker pool serial
-    let deserial_pool:string[] = data.serial_markers.split('_');
-    //process each marker
-    for(let team:number=0; team<2; team++)
+    //process each marker for team 0
+    let deserial_pool:string[] = data.serial_markers_0.split('_');
+    this.LoadSerialToBoard(0, deserial_pool);
+    //process each marker for team 1
+    deserial_pool = data.serial_markers_1.split('_');
+    this.LoadSerialToBoard(1, deserial_pool);
+  }
+
+  private LoadSerialToBoard(team:number, deserial:string[])
+  {
+    for(let index:number=0; index<12; index++)
     {
-      for(let index:number=0; index<12; index++)
-      {
-          var deserial_marker:string[] = deserial_pool[index+(team*12)].split(':');
-          //set position
-          this.marker_pool.MoveMarker(team, index, +deserial_marker[0], +deserial_marker[1], 
-            this.getTilePosition(+deserial_marker[0],+deserial_marker[1]));
-          //set states
-          //we are going to simplify states into numbers to reduce network traffic
-          //  is marker catured
-          if(deserial_marker[2] == "1") { this.marker_pool.CaptureMarkerByIndex(team, index); }
-          //  is marker enhanced
-          if(deserial_marker[3] == "1") { this.marker_pool.GetMarkerByTeam(team, index).SetEnhancement(true); }
-          else  { this.marker_pool.GetMarkerByTeam(team, index).SetEnhancement(false); }
-      }
+        var deserial_marker:string[] = deserial[index].split(':');
+        //set position
+        this.marker_pool.MoveMarker(team, index, +deserial_marker[0], +deserial_marker[1], 
+          this.getTilePosition(+deserial_marker[0],+deserial_marker[1]));
+        //set states
+        //we are going to simplify states into numbers to reduce network traffic
+        //  is marker catured
+        if(deserial_marker[2] == "1") { this.marker_pool.CaptureMarkerByIndex(team, index); }
+        //  is marker enhanced
+        if(deserial_marker[3] == "1") { this.marker_pool.GetMarkerByTeam(team, index).SetEnhancement(true); }
+        else  { this.marker_pool.GetMarkerByTeam(team, index).SetEnhancement(false); }
     }
   }
 
@@ -1216,5 +1209,6 @@ export type BoardCapsule =
   //board's state serial (players/session state)
   serial_state:string;
   //board's marker location serial
-  serial_markers:string;
+  serial_markers_0:string;
+  serial_markers_1:string;
 }

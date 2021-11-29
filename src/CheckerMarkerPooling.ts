@@ -142,24 +142,21 @@ export class CheckerMarkerPool extends Entity
     }
 
     //saves the marker pool's current state as a serial string
-    public SaveToSerial():string
+    public SaveToSerial(team:number):string
     {
         var serial:string = "";
 
         //process each marker
-        for(let team:number=0; team<2; team++)
+        for(let index:number=0; index<12; index++)
         {
-            for(let index:number=0; index<12; index++)
-            {
-                //set position
-                serial += this.GetMarkerByTeam(team, index).Assignment[0]+":"+this.GetMarkerByTeam(team, index).Assignment[1];
-                //set states
-                //we are going to simplify states into numbers to reduce network traffic
-                if(this.GetMarkerByTeam(team, index).Captured) { serial += ":"+1; } else { serial += 0; }
-                if(this.GetMarkerByTeam(team, index).Enhanced) { serial += ":"+1; } else { serial += ":"+0; }
-                //seperator for each marker def
-                serial += "_";
-            }
+            //set position
+            serial += this.GetMarkerByTeam(team, index).Assignment[0]+":"+this.GetMarkerByTeam(team, index).Assignment[1];
+            //set states
+            //we are going to simplify states into numbers to reduce network traffic
+            if(this.GetMarkerByTeam(team, index).Captured) { serial += ":1"; } else { serial += ":0" }
+            if(this.GetMarkerByTeam(team, index).Enhanced) { serial += ":1"; } else { serial += ":0"; }
+            //seperator for each marker def
+            serial += "_";
         }
 
         return serial;
